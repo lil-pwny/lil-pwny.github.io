@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Port Scanner and Link Follower</title>
+</head>
+<body>
+    <h1>Port Scanner and Link Follower</h1>
+    <button id="start-scan">Start Scanning</button>
+    <div id="output"></div>
+
+    <script>
+        async function scanPorts() {
+            const output = document.getElementById('output');
+            output.innerHTML += '<p>Scanning ports on localhost...</p>';
+
+            for (let port = 21; port <= 65500; port++) {
+                try {
+                    const response = await fetch(`http://localhost:${port}`);
+                    if (response.ok) {
+                        output.innerHTML += `<p>Port ${port} is open.</p>`;
+                    }
+                } catch (error) {
+                    // Ignore errors (assume port is closed or inaccessible)
+                }
+            }
+            output.innerHTML += '<p>Port scanning complete.</p>';
+        }
+
+        function followLinks() {
+            const links = document.querySelectorAll('a');
+            const output = document.getElementById('output');
+            output.innerHTML += `<p>Found ${links.length} links on the page:</p>`;
+
+            links.forEach(link => {
+                output.innerHTML += `<p>Following link: <a href="${link.href}" target="_blank">${link.href}</a></p>`;
+            });
+        }
+
+        document.getElementById('start-scan').addEventListener('click', () => {
+            followLinks();
+            scanPorts();
+        });
+    </script>
+</body>
+</html>
